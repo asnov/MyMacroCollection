@@ -335,6 +335,7 @@ enum DebugLoggerError: CustomStringConvertible, Error {
 ///     }
 ///
 ///  Will print out - "In Foo - failed"
+// @attached(member) - adds new declarations inside the type/extension it's applied to
 public struct DebugLoggerMacro: MemberMacro {
     public static func expansion(
         of node: AttributeSyntax,

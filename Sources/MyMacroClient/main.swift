@@ -68,3 +68,14 @@ func fetchData(_ url: String, completionBlock: @escaping (Result<Int, Error>) ->
 
 let httpCode = try await fetchData("http://localhost")
 print("httpCode=\(httpCode)")
+
+// @attached(member) - adds new declarations inside the type/extension it's applied to
+@DebugLogger
+class FooBebebe {
+    func bar() {
+        log(issue: "array was empty")
+    }
+}
+
+let foo = FooBebebe()
+foo.bar()
