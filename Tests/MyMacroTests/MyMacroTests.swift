@@ -10,6 +10,7 @@ import MyMacroMacros
 
 let testMacros: [String: Macro.Type] = [
     "stringify": StringifyMacro.self,
+    "DebugLogger": DebugLoggerMacro.self,
 ]
 #endif
 
@@ -44,5 +45,26 @@ final class MyMacroTests: XCTestCase {
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
+    }
+    
+    func testMacroDebugLoggerTests() {
+        assertMacroExpansion(
+            """
+            @DebugLogger
+            class Foo {
+            }
+            """,
+            expandedSource: """
+            class Foo {
+
+                func log(issue: String) {
+                    #if DEBUG
+                    print("In Foo - \\(issue)")
+                    #endif
+                }
+            }
+            """,
+            macros: testMacros
+        )
     }
 }

@@ -4,6 +4,8 @@ import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
 import SwiftDiagnostics
+
+// @freestanding(expression) - creates a piece of code that returns a value
 /// Implementation of the `stringify` macro, which takes an expression
 /// of any type and produces a tuple containing the value of that expression
 /// and the source code that produced the value. For example
@@ -26,6 +28,8 @@ public struct StringifyMacro: ExpressionMacro {
     }
 }
 
+// from https://medium.com/@canakyildz/swift-macros-detailed-practical-understanding-829d88d337fb # Swift Macros: Detailed & Practical Understanding
+// @freestanding(expression) - creates a piece of code that returns a value
 public struct ComputeSquareMacro: ExpressionMacro {
     public static func expansion(
         of node: some SwiftSyntax.FreestandingMacroExpansionSyntax,
@@ -46,6 +50,7 @@ struct MyMessage: NoteMessage {
     var noteID: SwiftDiagnostics.MessageID
 }
 
+// @freestanding(declaration) - creates one or more declarations
 struct DecloMacroExample: DeclarationMacro {
     static func expansion(
         of node: some SwiftSyntax.FreestandingMacroExpansionSyntax,
@@ -64,6 +69,7 @@ struct DecloMacroExample: DeclarationMacro {
     }
 }
 
+// @attached(member) - adds new declarations inside the type/extension it's applied to
 public struct EnumMemberMacro: MemberMacro {
     public static func expansion<Declaration: DeclGroupSyntax, Context: MacroExpansionContext>(
         of node: AttributeSyntax,
@@ -92,6 +98,7 @@ public struct EnumMemberMacro: MemberMacro {
     }
 }
 
+// @attached(accessor) - add accessors to a property
 public struct StoringGuyMacro: AccessorMacro {
     public static func expansion<
         Context: SwiftSyntaxMacros.MacroExpansionContext,
@@ -120,6 +127,7 @@ public struct StoringGuyMacro: AccessorMacro {
     }
 }
 
+// @attached(memberAttribute) - adds attributes to the declarations in the type/extension it's applied to
 extension StoringGuyMacro: MemberAttributeMacro {
     public static func expansion(
         of node: SwiftSyntax.AttributeSyntax,
@@ -152,6 +160,7 @@ extension SyntaxCollection {
   }
 }
 
+// @attached(peer) - adds new declarations alongside the declaration it's applied to
 public struct AddAsyncMacro: PeerMacro {
     public static func expansion(
         of node: SwiftSyntax.AttributeSyntax,
@@ -303,6 +312,63 @@ public struct AddAsyncMacro: PeerMacro {
     }
 }
 
+// from https://medium.com/better-programming/swift-macros-4f32e33ccf19
+enum DebugLoggerError: CustomStringConvertible, Error {
+    case notCorrectType
+
+    var description: String {
+        switch self {
+        case .notCorrectType: return "@DebugLogger can only be applied to a class & struct"
+        }
+    }
+}
+
+/// Implementation of the `DebugLogger` macro, which takes a string
+/// and prints the class and issue only during debugging. For example
+///
+///     @DebugLogger
+///     class Foo {
+///         func failure() {
+///             ....
+///             log(issue: "failed")
+///         }
+///     }
+///
+///  Will print out - "In Foo - failed"
+public struct DebugLoggerMacro: MemberMacro {
+    public static func expansion(
+        of node: AttributeSyntax,
+        providingMembersOf declaration: some DeclGroupSyntax,
+        conformingTo protocols: [TypeSyntax],
+        in context: some MacroExpansionContext
+    ) throws -> [SwiftSyntax.DeclSyntax] {
+        // TODO: add type check for other DeclSyntax
+        let identifierName: TokenSyntax
+        if let classDecl = declaration.as(ClassDeclSyntax.self) {
+            identifierName = classDecl.name
+        } else if let structDecl = declaration.as(StructDeclSyntax.self) {
+            identifierName = structDecl.name
+        } else {
+            throw DebugLoggerError.notCorrectType
+        }
+        
+        // We could make issue generic but for now let's leave it as a string parameter
+        let printFunc = try FunctionDeclSyntax("func log(issue: String)") {
+            StmtSyntax(stringLiteral:"""
+
+                    #if DEBUG
+                    print(\"In \(identifierName.text) - \\(issue)\")
+                    #endif
+                """
+            )
+        }
+        
+        return [
+            DeclSyntax(printFunc)
+        ]
+    }
+}
+
 
 @main
 struct MyMacroPlugin: CompilerPlugin {
@@ -313,5 +379,7 @@ struct MyMacroPlugin: CompilerPlugin {
         EnumMemberMacro.self,
         StoringGuyMacro.self,
         AddAsyncMacro.self,
+        
+        DebugLoggerMacro.self,
     ]
 }

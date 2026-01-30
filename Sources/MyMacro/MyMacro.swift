@@ -28,3 +28,18 @@ public macro StoringGuyAttributes() = #externalMacro(module: "MyMacroMacros", ty
 
 @attached(peer, names: overloaded)
 public macro AddAsync() = #externalMacro(module: "MyMacroMacros", type: "AddAsyncMacro")
+
+/// A macro that generates a logger function to let the
+/// object log the issue within but only during debuging. For example,
+///
+///     @DebugLogger
+///     class Foo {}
+///
+/// `produces a function`
+///     func log(issue: String) {
+///         #if DEBUG
+///         print("In Foo - \(issue)")
+///         #endif
+///     }
+@attached(member, names: named(log(issue:)))
+public macro DebugLogger() = #externalMacro(module: "MyMacroMacros", type: "DebugLoggerMacro")
