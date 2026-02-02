@@ -43,3 +43,7 @@ public macro AddAsync() = #externalMacro(module: "MyMacroMacros", type: "AddAsyn
 ///     }
 @attached(member, names: named(log(issue:)))
 public macro DebugLogger() = #externalMacro(module: "MyMacroMacros", type: "DebugLoggerMacro")
+
+
+//public protocol Observable {}
+//@attached(member, names: named(_$observationRegistrar), named(access), named(withMutation), named(shouldNotifyObservers)) @attached(memberAttribute) @attached(extension, conformances: Observable) public macro RemoteObservable() = #externalMacro(module: "ObservationMacros", type: "ObservableMacro")

@@ -1,4 +1,7 @@
 import MyMacro
+import Playgrounds
+import Observation
+import SwiftUI
 
 let a = 17
 let b = 25
@@ -79,3 +82,15 @@ class FooBebebe {
 
 let foo = FooBebebe()
 foo.bar()
+
+//@RemoteObservable
+@Observable
+class testBebebe: Observable {
+    let qwer = "qwer"
+}
+
+struct HostStruct {
+    @State private var testVar = testBebebe()
+}
+
+try await examples()
