@@ -20,8 +20,6 @@ final class Car {
     }
 }
 
-//@MainActor var cars: [Car] = [Car(name: "Toyota"), Car(name: "Ford")]
-
 @Observable
 @MainActor
 final class Garage {
@@ -29,29 +27,56 @@ final class Garage {
     func getCarList() -> String {
         cars.reduce("\(cars.count) cars:") { "\($0) \($1.name)(\($1.needsRepairs ? "T" : "F"))," }
     }
+    
+    func render() {
+        withObservationTracking {
+            _ = self.cars.count
+            for car in self.cars {
+                // Thread.sleep(until: .now + 1)
+                print("\(car.name)(\(car.needsRepairs))")
+            }
+        } onChange: {
+            print("Schedule renderer.")
+            Task { @MainActor in
+                self.render()
+            }
+        }
+    }
+    
+    func changes() -> AsyncStream<String> {
+        let base = Observations.tracking {
+            _ = self.cars.count
+            for car in self.cars {
+                _ = car.name
+                _ = car.needsRepairs
+            }
+            return self.getCarList()
+        } onChange: {
+        }
+        return AsyncStream { continuation in
+            Task { @MainActor in
+                for await snapshot in base {
+                    continuation.yield(snapshot)
+                }
+                continuation.finish()
+            }
+        }
+    }
 }
 
 @MainActor let garage = Garage()
 
-@MainActor func render() {
-    withObservationTracking {
-        _ = garage.cars.count
-        for car in garage.cars {
-//            Thread.sleep(until: .now + 1)
-            print("\(car.name)(\(car.needsRepairs))")
-        }
-    } onChange: {
-        print("Schedule renderer.")
-        Task { @MainActor in
-            render()
-        }
-    }
-}
-
 @MainActor func examples() async throws {
     Task { @MainActor in
-        render()
+        garage.render()
     }
+
+    Task { @MainActor in
+        for await snapshot in garage.changes() {
+            print("observations:", snapshot)
+        }
+    }
+
     Task { @MainActor in
         print("inside task 1:", garage.getCarList())
 
@@ -71,6 +96,7 @@ final class Garage {
         try await Task.sleep(nanoseconds: 1_000_000_000)
         print("inside task 5:", garage.getCarList())
     }
+
     try await Task.sleep(nanoseconds: 5_000_000_000)
     print("finished:", garage.getCarList())
 }
