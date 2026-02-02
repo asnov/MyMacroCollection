@@ -27,7 +27,7 @@ final class Car {
 final class Garage {
     var cars: [Car] = [Car(name: "Toyota"), Car(name: "Ford")]
     func getCarList() -> String {
-        cars.reduce("\(cars.count) cars:") { "\($0) \($1.name)," }
+        cars.reduce("\(cars.count) cars:") { "\($0) \($1.name)(\($1.needsRepairs ? "T" : "F"))," }
     }
 }
 
@@ -38,7 +38,7 @@ final class Garage {
         _ = garage.cars.count
         for car in garage.cars {
 //            Thread.sleep(until: .now + 1)
-            print(car.name)
+            print("\(car.name)(\(car.needsRepairs))")
         }
     } onChange: {
         print("Schedule renderer.")
@@ -66,6 +66,10 @@ final class Garage {
         garage.cars[1].name = "Ferrary"
         try await Task.sleep(nanoseconds: 1_000_000_000)
         print("inside task 4:", garage.getCarList())
+
+        garage.cars[0].needsRepairs = true
+        try await Task.sleep(nanoseconds: 1_000_000_000)
+        print("inside task 5:", garage.getCarList())
     }
     try await Task.sleep(nanoseconds: 5_000_000_000)
     print("finished:", garage.getCarList())
