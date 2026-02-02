@@ -6,7 +6,7 @@ import CompilerPluginSupport
 
 let package = Package(
     name: "MyMacro",
-    platforms: [.macOS(.v14), .iOS(.v14), .tvOS(.v14), .watchOS(.v11), .macCatalyst(.v14)],
+    platforms: [.macOS(.v26), .iOS(.v26), .tvOS(.v26), .watchOS(.v26), .macCatalyst(.v26)],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
