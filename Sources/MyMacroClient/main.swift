@@ -1,7 +1,6 @@
 import MyMacro
 import Playgrounds
 import Observation
-import SwiftUI
 
 let a = 17
 let b = 25
@@ -83,14 +82,30 @@ class FooBebebe {
 let foo = FooBebebe()
 foo.bar()
 
-//@RemoteObservable
 @Observable
-class testBebebe: Observable {
-    let qwer = "qwer"
+@MainActor
+class testBebebe {
+    var bebebe = "qwer"
+
+    func getChangeSequence() -> any AsyncSequence<String, Never> {
+        return Observations { [unowned self] in
+            self.bebebe
+        }
+    }
+}
+
+let bebe = testBebebe()
+Task {
+    for await change in bebe.getChangeSequence() {
+        print("testBebebe changed to: \(change)")
+    }
+}
+Task {
+    bebe.bebebe += "-"
 }
 
 struct HostStruct {
-    @State private var testVar = testBebebe()
 }
+
 
 try await examples2()

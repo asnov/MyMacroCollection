@@ -1,6 +1,8 @@
 // The Swift Programming Language
 // https://docs.swift.org/swift-book
 
+import Observation
+
 /// A macro that produces both a value and a string containing the
 /// source code that generated the value. For example,
 ///
@@ -45,5 +47,7 @@ public macro AddAsync() = #externalMacro(module: "MyMacroMacros", type: "AddAsyn
 public macro DebugLogger() = #externalMacro(module: "MyMacroMacros", type: "DebugLoggerMacro")
 
 
-//public protocol Observable {}
-//@attached(member, names: named(_$observationRegistrar), named(access), named(withMutation), named(shouldNotifyObservers)) @attached(memberAttribute) @attached(extension, conformances: Observable) public macro RemoteObservable() = #externalMacro(module: "ObservationMacros", type: "ObservableMacro")
+//@attached(member, names: named(_$observationRegistrar), named(access), named(withMutation), named(shouldNotifyObservers))
+//@attached(memberAttribute)
+//@attached(extension, conformances: Observable) public macro RemoteObservable() = #externalMacro(module: "ObservationMacros", type: "ObservableMacro")
+
