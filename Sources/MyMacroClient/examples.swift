@@ -44,6 +44,34 @@ final class Garage {
         }
     }
     
+    func events() -> Observations<String, Error> {
+        let sequence1: Observations<String, Error> = Observations.untilFinished {
+//            var observation: Observations<String, Error>.Iteration = .finish
+//            observation = .next("event 1")
+//            return observation
+            return .next("event 1")
+        }
+        let iterator = sequence1.makeAsyncIterator()
+
+        let value = Observations<String, Error>.Iteration.next("event 1")
+        
+        let sequence2: Observations<String, Error> = Observations {
+            withObservationTracking {
+                _ = self.cars.count
+                for car in self.cars {
+                    _ = car.name
+                    _ = car.needsRepairs
+                }
+            } onChange: {
+                print("Events: schedule renderer.")
+            }
+
+            return "event 1"
+        }
+
+        return sequence2
+    }
+
     func changes() -> AsyncStream<String> {
         AsyncStream { continuation in
             Task { @MainActor [weak self] in
@@ -120,37 +148,77 @@ final class Garage {
 
 @MainActor let garage = Garage()
 
+@MainActor
+func trackGarageChanges() async {
+    print("Started observing garage...")
+
+    let changeSequence = Observations { [unowned garage] in
+        // Tracking: The properties read here determine what triggers the sequence.
+        garage.getCarList()
+    }
+    
+    let changeSequenceFinished = Observations<String, Never>.untilFinished { [weak garage] in
+        guard let garage else {
+            return .finish
+        }
+        return .next(garage.getCarList())
+    }
+
+    // Iterate over the sequence.
+    // It emits a value whenever a transaction finishes after a change.
+    for await currentList in changeSequenceFinished {
+        print("--- Transactional Change ---")
+        print("New state: \(currentList)")
+    }
+}
+
 @MainActor func examples() async throws {
     Task { @MainActor in
         garage.render()
     }
-
+    
     Task { @MainActor in
         for await snapshot in garage.changes() {
             print("observations:", snapshot)
         }
     }
-
+    
     Task { @MainActor in
         print("inside task 1:", garage.getCarList())
-
+        
         garage.cars[0].name = "BMW"
         try await Task.sleep(nanoseconds: 1_000_000_000)
         print("inside task 2:", garage.getCarList())
-
+        
         garage.cars.append(.init(name: "Nissan"))
         try await Task.sleep(nanoseconds: 1_000_000_000)
         print("inside task 3:", garage.getCarList())
-
+        
         garage.cars[1].name = "Ferrary"
         try await Task.sleep(nanoseconds: 1_000_000_000)
         print("inside task 4:", garage.getCarList())
-
-        garage.cars[0].needsRepairs = true
+        
+        garage.cars[2].needsRepairs = true
         try await Task.sleep(nanoseconds: 1_000_000_000)
         print("inside task 5:", garage.getCarList())
     }
-
+    
     try await Task.sleep(nanoseconds: 5_000_000_000)
     print("finished:", garage.getCarList())
+}
+
+@MainActor func examples2() async throws {
+    // Example of triggering a change
+    Task {
+        await trackGarageChanges()
+    }
+    
+    Task {
+        try? await Task.sleep(for: .seconds(2))
+        await MainActor.run {
+            print("--- Updating Toyota ---")
+            garage.cars[0].needsRepairs = true
+        }
+    }
+    try await examples()
 }

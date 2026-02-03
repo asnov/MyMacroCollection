@@ -93,4 +93,4 @@ struct HostStruct {
     @State private var testVar = testBebebe()
 }
 
-try await examples()
+try await examples2()
