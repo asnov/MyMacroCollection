@@ -11,6 +11,7 @@ import MyMacroMacros
 let testMacros: [String: Macro.Type] = [
     "stringify": StringifyMacro.self,
     "DebugLogger": DebugLoggerMacro.self,
+    "PrintableStructure": PrintableStructureMacro.self,
 ]
 #endif
 
@@ -65,6 +66,35 @@ final class MyMacroTests: XCTestCase {
             }
             """,
             macros: testMacros
+        )
+    }
+    
+    func testMacroPrintableStructure() {
+        assertMacroExpansion(
+            """
+            @PrintableStructure
+            class UserProfile {
+                var name: String = "Alex"
+                var age: Int = 25
+            }
+            """,
+            expandedSource: """
+                class UserProfile {
+                    var name: String = "Alex"
+                    var age: Int = 25
+
+                    func logStructure() {
+                        print("--- PrintableStructure Macro ---")
+                        print(
+                            \"""
+                             - name: String 
+                             - age: Int 
+                            \""")
+                        print("--------------------------------")
+                    }
+                }
+                """,
+            macros: testMacros,
         )
     }
 }

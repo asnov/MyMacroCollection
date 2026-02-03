@@ -104,8 +104,13 @@ Task {
     bebe.bebebe += "-"
 }
 
-struct HostStruct {
+@PrintableStructure
+class UserProfile {
+    var name: String = "Alex"
+    var age: Int = 25
 }
+let profile = UserProfile()
+profile.logStructure()
 
 
 try await examples2()

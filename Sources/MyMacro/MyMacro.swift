@@ -51,3 +51,5 @@ public macro DebugLogger() = #externalMacro(module: "MyMacroMacros", type: "Debu
 //@attached(memberAttribute)
 //@attached(extension, conformances: Observable) public macro RemoteObservable() = #externalMacro(module: "ObservationMacros", type: "ObservableMacro")
 
+@attached(member, names: named(logStructure))
+public macro PrintableStructure() = #externalMacro(module: "MyMacroMacros", type: "PrintableStructureMacro")

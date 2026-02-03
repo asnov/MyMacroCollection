@@ -371,6 +371,46 @@ public struct DebugLoggerMacro: MemberMacro {
 }
 
 
+public struct PrintableStructureMacro: MemberMacro {
+    public static func expansion(
+        of node: AttributeSyntax,
+        providingMembersOf declaration: some DeclGroupSyntax,
+        conformingTo protocols: [TypeSyntax],
+        in context: some MacroExpansionContext
+    ) throws -> [DeclSyntax] {
+        
+        // Извлекаем все переменные (properties)
+        let members = declaration.memberBlock.members
+        let variableDecls = members.compactMap { $0.decl.as(VariableDeclSyntax.self) }
+        
+        var structureDescriptionArray = [String]()
+        
+        for decl in variableDecls {
+            for binding in decl.bindings {
+                if let propertyName = binding.pattern.as(IdentifierPatternSyntax.self)?.identifier.text,
+                   let typeName = binding.typeAnnotation?.type.description {
+                    structureDescriptionArray.append(" - \(propertyName): \(typeName)")
+                }
+            }
+        }
+        let structureDescription = structureDescriptionArray.joined(separator: "\n")
+
+        // Генерируем функцию, которая будет печатать структуру
+        return [
+            """
+            func logStructure() {
+                print("--- PrintableStructure Macro ---")
+                print(
+            \"""
+            \(raw: structureDescription)
+            \""")
+                print("--------------------------------")
+            }
+            """
+        ]
+    }
+}
+
 @main
 struct MyMacroPlugin: CompilerPlugin {
     let providingMacros: [Macro.Type] = [
@@ -380,7 +420,9 @@ struct MyMacroPlugin: CompilerPlugin {
         EnumMemberMacro.self,
         StoringGuyMacro.self,
         AddAsyncMacro.self,
-        
+
         DebugLoggerMacro.self,
+
+        PrintableStructureMacro.self,
     ]
 }
