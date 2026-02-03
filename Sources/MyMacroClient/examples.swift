@@ -44,32 +44,13 @@ final class Garage {
         }
     }
     
-    func events() -> Observations<String, Error> {
-        let sequence1: Observations<String, Error> = Observations.untilFinished {
-//            var observation: Observations<String, Error>.Iteration = .finish
-//            observation = .next("event 1")
-//            return observation
-            return .next("event 1")
-        }
-        let iterator = sequence1.makeAsyncIterator()
-
-        let value = Observations<String, Error>.Iteration.next("event 1")
-        
-        let sequence2: Observations<String, Error> = Observations {
-            withObservationTracking {
-                _ = self.cars.count
-                for car in self.cars {
-                    _ = car.name
-                    _ = car.needsRepairs
-                }
-            } onChange: {
-                print("Events: schedule renderer.")
+    func changeEvents() -> any AsyncSequence<String, Never> {
+        Observations.untilFinished { [weak garage] in
+            guard let garage else {
+                return .finish
             }
-
-            return "event 1"
+            return .next(garage.getCarList())
         }
-
-        return sequence2
     }
 
     func changes() -> AsyncStream<String> {
@@ -157,16 +138,9 @@ func trackGarageChanges() async {
         garage.getCarList()
     }
     
-    let changeSequenceFinished = Observations<String, Never>.untilFinished { [weak garage] in
-        guard let garage else {
-            return .finish
-        }
-        return .next(garage.getCarList())
-    }
-
     // Iterate over the sequence.
     // It emits a value whenever a transaction finishes after a change.
-    for await currentList in changeSequenceFinished {
+    for await currentList in garage.changeEvents() {
         print("--- Transactional Change ---")
         print("New state: \(currentList)")
     }
